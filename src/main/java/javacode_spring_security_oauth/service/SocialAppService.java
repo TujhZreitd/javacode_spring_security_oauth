@@ -37,11 +37,18 @@ public class SocialAppService implements OAuth2UserService<OAuth2UserRequest, OA
 
         if (oAuth2User != null) {
             Map<String, Object> attributes = oAuth2User.getAttributes();
-            Optional<User> optionalUser = userRepository.findByEmail((String) attributes.get("email"));
+            String email = (String) attributes.get("email");
+            logger.info("Attempting to load user with email: {}", email);
+            Optional<User> optionalUser = userRepository.findByEmail(email);
             Set<Role> roles = checkRolesUser(oAuth2User);
             if (optionalUser.isEmpty()) {
+                logger.info("User with email: {} not found, creating new user", email);
                 createAndSaveUser(attributes, roles);
+            } else {
+                logger.info("User with email: {} already exists", email);
             }
+        } else {
+            logger.warn("OAuth2User returned null for request: {}", userRequest);
         }
         return oAuth2User;
     }
